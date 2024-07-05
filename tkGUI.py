@@ -5,10 +5,9 @@ from sqlData import get_data_from_db
 
 
 class Gui():
-        def __init__(self, master, data, WITH_SQL):
-                self.WITH_SQL=WITH_SQL
+        def __init__(self, master):
+
                 self.window=master
-                self.data=data
                 self.window.title("Kontrola wyjść/wejść SKSM")
                 self.window.resizable(False, False)
                 self.sorted_by= {"name":False, "time":False, "io":False}
@@ -17,7 +16,6 @@ class Gui():
                 self.set_search_widget()
                 self.set_time_widget()
                 self.sort_data("io")
-                self.update_users()
 
         def set_time_widget(self):
                 HOURS = tuple([f'{dt.time(i).strftime("%H:%M:%S")}' for i in range(0,24)])
@@ -49,12 +47,10 @@ class Gui():
                 button_name = tkinter.Button(self.window, text="Imię i Nazwisko", width=10, pady=1, command=lambda: self.sort_data("name"))
                 button_time = tkinter.Button(self.window, text="Data", width=15, pady=1, command=lambda: self.sort_data("time"))
                 button_io = tkinter.Button(self.window, text="We/Wy", width=12, pady=1, command=lambda: self.sort_data("io"))
-                button_update = tkinter.Button(self.window, text="Aktualizuj użytkowników", width=10, pady=10, command=lambda: self.update_users())
 
                 button_time.grid(row=5, column=2, columnspan=2, sticky="nsew")
                 button_name.grid(row=5, column=3, columnspan=7, sticky="nsew")
                 button_io.grid(row=5, column=1, sticky="nsew")
-                button_update.grid(row=7, column=1, columnspan=10, sticky="nsew")
 
         def set_search_widget(self):
                 button_search = tkinter.Button(self.window, text="Wyszukaj", width=10, pady=10, command=lambda: self.sort_data("time"))
@@ -65,19 +61,18 @@ class Gui():
         def show_data(self, data):
             self.lista.delete(0, 'end')
             color_temp = 0
-
             for user in data:
-                if self.WITH_SQL:
-                        name=user[2] # Takie zastosowanie umożliwia odczyt zarówno z listy obiektów danej klasy jak i zwykłej listy
-                        time=user[5]
-                        io=user[6]
-                else:
-                        name=user.name
-                        time=user.time
-                        io=user.io
+                name=user[0]
+                time=user[1]
+                io=user[2]
 
-                formated_time = dt.datetime.utcfromtimestamp(int(time)).strftime('%Y-%m-%d %H:%M:%S')
-                self.lista.insert(tkinter.END, "{:^20s}   {:^25s}  {:<30s}".format(str(io), str(formated_time), str(name)))
+                if io=='0':
+                        io="Wejscia"
+                else:
+                        io="Wyjscia"
+
+                self.lista.insert(tkinter.END, "{:^20s}   {:^25s}  {:<30s}".format(str(io), str(time), str(name)))
+
                 if (io == "Wejscia"):
                     self.lista.itemconfig(color_temp, {'bg': '#B4DBBA'})
                 else:
@@ -89,49 +84,15 @@ class Gui():
 
                 time_in = f'{self.cal_from.get()} {self.hour_from.get()}'
                 formated_time_in=dt.datetime.strptime(time_in, "%Y-%m-%d %H:%M:%S")
-                print(formated_time_in)
-                timestamp_in = dt.datetime.timestamp(formated_time_in)
-                timestamp_in = int(timestamp_in)  # --------------------- CZAS ZIMOWY
 
                 time_out = f'{self.cal_to.get()} {self.hour_to.get()}'
                 formated_time_out=dt.datetime.strptime(time_out, "%Y-%m-%d %H:%M:%S")
-                timestamp_out = dt.datetime.timestamp(formated_time_out)
-                timestamp_out = int(timestamp_out)
 
-                return (timestamp_in, timestamp_out)
+                return (formated_time_in, formated_time_out)
 
-        def is_in_time_range(self, timestamp):
-
-                timestamp_in, timestamp_out = self.get_time_range()
-                if timestamp_in + 7200 <= int(timestamp) <= timestamp_out + 7200:
-                        return True
-                else:
-                        return False
 
         def sort_data(self, sort_type=""):
-                if self.WITH_SQL:
-                        sorted_data=get_data_from_db(self.entry.get(), self.get_time_range(), sort_type+" DESC"*self.sorted_by[sort_type])
-                        self.sorted_by[sort_type]= not self.sorted_by[sort_type]
-                else:
-                        sorted_data=[]
-                        for user in self.data:
-                                if self.entry.get().lower() in user.name.lower():
-                                        if self.is_in_time_range(user.time):
-                                                sorted_data.append(user)
-
-                        if sort_type == "name":
-                                sorted_data.sort(key=lambda user: user.name, reverse=self.sorted_by['name'])
-                                self.sorted_by["name"]= not self.sorted_by['name']
-                        if sort_type == "time":
-                                sorted_data.sort(key=lambda user: user.time, reverse=self.sorted_by['time'])
-                                self.sorted_by["time"]= not self.sorted_by['time']
-                        if sort_type == "io":
-                                sorted_data.sort(key=lambda user: user.io, reverse=self.sorted_by['io'])
-                                self.sorted_by["io"]= not self.sorted_by['io']
-
+                sorted_data=get_data_from_db(self.entry.get(), self.get_time_range(), sort_type+" DESC"*self.sorted_by[sort_type])
+                self.sorted_by[sort_type]= not self.sorted_by[sort_type]
                 self.show_data(sorted_data)
-
-        def update_users(self):
-                pass
-
 
