@@ -3,6 +3,7 @@ from tkcalendar import DateEntry
 import datetime as dt
 from sqlData import get_data_from_db
 
+
 class Gui():
         def __init__(self, master, data, WITH_SQL):
                 self.WITH_SQL=WITH_SQL
@@ -16,6 +17,7 @@ class Gui():
                 self.set_search_widget()
                 self.set_time_widget()
                 self.sort_data("io")
+                self.update_users()
 
         def set_time_widget(self):
                 HOURS = tuple([f'{dt.time(i).strftime("%H:%M:%S")}' for i in range(0,24)])
@@ -47,10 +49,12 @@ class Gui():
                 button_name = tkinter.Button(self.window, text="Imię i Nazwisko", width=10, pady=1, command=lambda: self.sort_data("name"))
                 button_time = tkinter.Button(self.window, text="Data", width=15, pady=1, command=lambda: self.sort_data("time"))
                 button_io = tkinter.Button(self.window, text="We/Wy", width=12, pady=1, command=lambda: self.sort_data("io"))
+                button_update = tkinter.Button(self.window, text="Aktualizuj użytkowników", width=10, pady=10, command=lambda: self.update_users())
 
                 button_time.grid(row=5, column=2, columnspan=2, sticky="nsew")
                 button_name.grid(row=5, column=3, columnspan=7, sticky="nsew")
                 button_io.grid(row=5, column=1, sticky="nsew")
+                button_update.grid(row=7, column=1, columnspan=10, sticky="nsew")
 
         def set_search_widget(self):
                 button_search = tkinter.Button(self.window, text="Wyszukaj", width=10, pady=10, command=lambda: self.sort_data("time"))
@@ -61,6 +65,7 @@ class Gui():
         def show_data(self, data):
             self.lista.delete(0, 'end')
             color_temp = 0
+
             for user in data:
                 if self.WITH_SQL:
                         name=user[2] # Takie zastosowanie umożliwia odczyt zarówno z listy obiektów danej klasy jak i zwykłej listy
@@ -79,21 +84,26 @@ class Gui():
                     self.lista.itemconfig(color_temp, {'bg': '#D1737C'})
                 color_temp = color_temp + 1
 
+
         def get_time_range(self):
+
                 time_in = f'{self.cal_from.get()} {self.hour_from.get()}'
-                timestamp_in = dt.datetime.timestamp(dt.datetime.strptime(time_in, "%Y-%m-%d %H:%M:%S"))
-                timestamp_in = int(timestamp_in + 3600)  # --------------------- CZAS ZIMOWY
+                formated_time_in=dt.datetime.strptime(time_in, "%Y-%m-%d %H:%M:%S")
+                print(formated_time_in)
+                timestamp_in = dt.datetime.timestamp(formated_time_in)
+                timestamp_in = int(timestamp_in)  # --------------------- CZAS ZIMOWY
 
                 time_out = f'{self.cal_to.get()} {self.hour_to.get()}'
-                timestamp_out = dt.datetime.timestamp(dt.datetime.strptime(time_out, "%Y-%m-%d %H:%M:%S"))
-                timestamp_out = int(timestamp_out + 3600)
+                formated_time_out=dt.datetime.strptime(time_out, "%Y-%m-%d %H:%M:%S")
+                timestamp_out = dt.datetime.timestamp(formated_time_out)
+                timestamp_out = int(timestamp_out)
 
                 return (timestamp_in, timestamp_out)
 
         def is_in_time_range(self, timestamp):
 
                 timestamp_in, timestamp_out = self.get_time_range()
-                if timestamp_in <= int(timestamp) <= timestamp_out:
+                if timestamp_in + 7200 <= int(timestamp) <= timestamp_out + 7200:
                         return True
                 else:
                         return False
@@ -121,6 +131,7 @@ class Gui():
 
                 self.show_data(sorted_data)
 
-
+        def update_users(self):
+                pass
 
 

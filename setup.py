@@ -3,9 +3,9 @@ from xmlData import get_from_xml
 import tkinter
 from InveoReader import do_xml_from_web
 from sqlData import create_db_table, put_row_into_db, clear_db_table
-
-WITH_SQL=True
-
+import time
+start = time.time()
+WITH_SQL=False
 #do_xml_from_web()
 
 input_list=get_from_xml("Wejscia")
